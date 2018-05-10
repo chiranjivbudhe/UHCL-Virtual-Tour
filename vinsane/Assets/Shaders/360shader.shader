@@ -6,9 +6,9 @@
 
         Tags { "RenderType" = "Opaque" }
 
-        Cull Off
+        Cull Front
 
-        CGPROGRAM
+		CGPROGRAM
 
         #pragma surface surf Lambert vertex:vert
         sampler2D _MainTex;
