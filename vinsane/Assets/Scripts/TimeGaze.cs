@@ -35,6 +35,4 @@ public class TimeGaze : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 		isEntered = false;
 		timeElapsed = 0f;
 	}
-
-
 }

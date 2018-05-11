@@ -17,7 +17,6 @@ public class controller : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         currentPoint = startingPoint;
-
 	}
 	
 	// Update is called once per frame
@@ -27,7 +26,7 @@ public class controller : MonoBehaviour {
 		}        
 	}
 
-	public void NextPointofInterest(){
+	public void GoToNextPointofInterest(){
 		if (!PointsOfInterest[currentPoint].GetComponent<VideoPlayer>().isPlaying)
 		{ 
 				if (currentPoint == (PointsOfInterest.Length - 1))
