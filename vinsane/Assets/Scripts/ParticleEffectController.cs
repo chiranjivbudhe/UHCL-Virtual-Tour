@@ -73,8 +73,6 @@ public class ParticleEffectController : MonoBehaviour
         }
     }
 
-
-
     private void ResizeParticleSystem(Vector3 lerpFrom, Vector3 lerpTo, float speed, float timePassed)
     {
         _portalParticleSystem.transform.localScale = Vector3.Lerp(lerpFrom, lerpTo, (timePassed / speed));
