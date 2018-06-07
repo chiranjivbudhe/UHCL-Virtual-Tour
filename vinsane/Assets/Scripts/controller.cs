@@ -13,7 +13,7 @@ public class controller : MonoBehaviour {
     public RawImage rawImage;
 
     private int currentPoint;
-
+    
 	// Use this for initialization
 	void Start () {
         currentPoint = startingPoint;
@@ -37,13 +37,13 @@ public class controller : MonoBehaviour {
 				}
 				else
 				{
-				PointsOfInterest [currentPoint].transform.GetChild (0).GetChild (0).gameObject.SetActive(false);
+				    PointsOfInterest [currentPoint].transform.GetChild (0).GetChild (0).gameObject.SetActive(false);
 					currentPoint++;
-					RenderTexture renderTexture = new RenderTexture(256,256,24);
+					RenderTexture renderTexture = new RenderTexture(640,480,24);
 					continueText.enabled = false;
-					rawImage.enabled = true;
+                    rawImage.enabled = true;
 					PointsOfInterest[currentPoint].GetComponent<VideoPlayer>().targetTexture = renderTexture;
-					rawImage.texture = renderTexture;
+                    rawImage.material.SetTexture("_Video", renderTexture);
 				}
 
 				camera.transform.position = PointsOfInterest[currentPoint].transform.position;
