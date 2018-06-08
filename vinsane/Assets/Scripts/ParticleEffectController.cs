@@ -5,102 +5,144 @@ using UnityEngine.EventSystems;
 
 public class ParticleEffectController : MonoBehaviour
 {
-    bool expand;
-    float portalMaxScale = 1.0f;
-    float portalMinScale = .4f;
-    float warpScale = 6f;
-
-    public float speed = 5.0f, warpSpeed = 2.5f;
-    public float portalTimePassed = 0f;
+    public AudioClip teleportClip;
+    public AudioClip warpClip;
+    public float teleportSpeed = 3.0f, warpSpeed = 1.0f;
+    public float teleportTimePassed = 0f;
     public float warpTimePassed = 0f;
-    ParticleSystem _portalParticleSystem, _warpParticleSystem;
-    controller controllerScript;
+
+    private ParticleSystem portalParticleSystem, warpParticleSystem;
+    private controller controllerScript;
+    private AudioSource audioSource;
+    private bool gazing;
+    private float teleportMaxScale = 1.0f;
+    private float teleportMinScale = .4f;
+    private float warpScale = 6f;
 
     // Use this for initialization33
     void Start () {
-        _portalParticleSystem = GameObject.FindGameObjectWithTag("PS_Portal").GetComponent<ParticleSystem>();
-        _portalParticleSystem.transform.localScale = new Vector3(portalMinScale, portalMinScale, portalMinScale);
+        portalParticleSystem = GameObject.FindGameObjectWithTag("PS_Portal").GetComponent<ParticleSystem>();
+        portalParticleSystem.transform.localScale = new Vector3(teleportMinScale, teleportMinScale, teleportMinScale);
 
-        _warpParticleSystem = GameObject.FindGameObjectWithTag("PS_Warp").GetComponent<ParticleSystem>();
+        warpParticleSystem = GameObject.FindGameObjectWithTag("PS_Warp").GetComponent<ParticleSystem>();
         controllerScript = GameObject.FindGameObjectWithTag("GameController").GetComponent<controller>();
 
+        audioSource = gameObject.GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
     void Update () {
-
-        //PEControllerScript.ResizeParticleSystem(_portalParticleSystem, lerpFrom, lerpTo, speed); // zoom-in effect for portal 
-        if (expand && _portalParticleSystem.IsAlive())
+        if (portalParticleSystem.IsAlive())
         {
-            if (_portalParticleSystem.transform.localScale.x < portalMaxScale)
+            if (gazing)
             {
-                //expand portal while being gazed upon
-                portalTimePassed += Time.deltaTime;
-                ResizeParticleSystem(new Vector3(portalMinScale, portalMinScale, portalMinScale), new Vector3(portalMaxScale, portalMaxScale, portalMaxScale), speed, portalTimePassed);
-            }
-            //Weve Hit Warp Size
-            else if (_portalParticleSystem.transform.localScale.x >= portalMaxScale && _portalParticleSystem.transform.localScale.x < warpScale)
-            {
-                //Resize to warp scale
-                warpTimePassed += Time.deltaTime;
-                ResizeParticleSystem(new Vector3(portalMaxScale, portalMaxScale, portalMaxScale), new Vector3(warpScale, warpScale, warpScale), warpSpeed, warpTimePassed);
-                if (!_warpParticleSystem.isPlaying) {
-                    ActParticleSystem(_warpParticleSystem);
+                //Increase portal size 
+                if (portalParticleSystem.transform.localScale.x < teleportMaxScale)
+                {
+                    //expand portal while being gazed upon
+                    teleportTimePassed += Time.deltaTime;
+                    ResizeParticleSystem(new Vector3(teleportMinScale, teleportMinScale, teleportMinScale), new Vector3(teleportMaxScale, teleportMaxScale, teleportMaxScale), teleportSpeed, teleportTimePassed);
+                }
+                //Weve Hit Warp Size
+                else if (portalParticleSystem.transform.localScale.x >= teleportMaxScale && portalParticleSystem.transform.localScale.x < warpScale)
+                {
+                    //Resize to warp scale
+                    warpTimePassed += Time.deltaTime;
+                    ResizeParticleSystem(new Vector3(teleportMaxScale, teleportMaxScale, teleportMaxScale), new Vector3(warpScale, warpScale, warpScale), warpSpeed, warpTimePassed);
+                    if (!warpParticleSystem.isPlaying)
+                    {
+                        warpParticleSystem.Play(true);
+                    }
+
+                    //Switch to warp sound
+                    if (audioSource.clip.name == teleportClip.name)
+                    {
+                        audioSource.loop = false;
+                        audioSource.clip = warpClip;
+                        audioSource.Play();
+                    }
+                }
+                //Go to next scene after warp
+                else if (portalParticleSystem.transform.localScale.x >= warpScale)
+                {
+                    /* go to the next point of interest
+                    *   stop the warp effect
+                    *   rescale portal to min scale
+                    */
+                    teleportTimePassed = 0;
+                    warpTimePassed = 0;
+                    controllerScript.GoToNextPointofInterest();
+                    DeactivatePortal();
+                    portalParticleSystem.transform.localScale = new Vector3(teleportMinScale, teleportMinScale, teleportMinScale);
                 }
             }
-            else if (_portalParticleSystem.transform.localScale.x >= warpScale)
+            else //shrink portal 
             {
-                /* go to the next point of interest
-                *   stp the warp effect
-                *   rescale portal to min scale
-                */
-                portalTimePassed = 0;
+                teleportTimePassed -= Time.deltaTime;
+                if (teleportTimePassed < 0)
+                {
+                    teleportTimePassed = 0;
+                }
                 warpTimePassed = 0;
-                controllerScript.GoToNextPointofInterest();
-                StopWarpEffect();
-                _portalParticleSystem.transform.localScale = new Vector3(portalMinScale, portalMinScale, portalMinScale);
+                ResizeParticleSystem(new Vector3(teleportMinScale, teleportMinScale, teleportMinScale), new Vector3(teleportMaxScale, teleportMaxScale, teleportMaxScale), teleportSpeed, teleportTimePassed);
+
+                //If warpClip was playing switch back to teleportClip
+                if (audioSource.clip.name == warpClip.name)
+                {
+                    audioSource.loop = true;
+                    audioSource.clip = teleportClip;
+                    audioSource.Play();
+                }
+                
             }
-        }
-        else
-        {
-            portalTimePassed -= Time.deltaTime;
-            if (portalTimePassed < 0)
-            {
-                portalTimePassed = 0;
-            }
-            warpTimePassed = 0;
-            ResizeParticleSystem(new Vector3(portalMinScale, portalMinScale, portalMinScale), new Vector3(portalMaxScale, portalMaxScale, portalMaxScale), speed, portalTimePassed);
         }
     }
 
     private void ResizeParticleSystem(Vector3 lerpFrom, Vector3 lerpTo, float speed, float timePassed)
     {
-        _portalParticleSystem.transform.localScale = Vector3.Lerp(lerpFrom, lerpTo, (timePassed / speed));
+        portalParticleSystem.transform.localScale = Vector3.Lerp(lerpFrom, lerpTo, (timePassed / speed));
     }
 
-    public void ActParticleSystem( ParticleSystem particleSystemRef)
+    public void ActivatePortal()
     {
-        particleSystemRef.Play(true);
+        //enable collider
+        gameObject.GetComponent<SphereCollider>().enabled = true;
+
+        //start particles
+        portalParticleSystem.Play(true);
+
+        //start sound
+        audioSource.loop = true;
+        audioSource.clip = teleportClip;
+        audioSource.Play();
     }
 
-    public void De_ActParticleSystem(ParticleSystem particleSystemRef)
+    public void DeactivatePortal()
     {
-        particleSystemRef.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        //disable collider 
+        gameObject.GetComponent<SphereCollider>().enabled = false;
+       
+        //Stop particales
+        portalParticleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        warpParticleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        //Stop sound
+        audioSource.loop = false;
+        audioSource.Stop();
     }
 
-    public void OnPointerEnter(ParticleSystem particleSystemRef)
+    public bool GetPortalIsAlive()
     {
-        expand = true;
+        return portalParticleSystem.IsAlive();
     }
 
-    public void OnPointerExit(ParticleSystem particleSystemRef)
+    public void PointerEnter()
     {
-        expand = false;
+        gazing = true;
     }
 
-    public void StopWarpEffect()
+    public void PointerExit()
     {
-        De_ActParticleSystem(_portalParticleSystem); // deactivate portal particle system
-        De_ActParticleSystem(_warpParticleSystem); // deactivate portal particle system
+        gazing = false;
     }
 }

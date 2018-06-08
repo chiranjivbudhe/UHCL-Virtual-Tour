@@ -7,13 +7,11 @@ using UnityEngine.Video;
 public class controller : MonoBehaviour {
 
     public GameObject[] PointsOfInterest;
-	public GameObject camera;
+	public GameObject player;
     public int startingPoint = 0;
     public RawImage rawImage;
-
     public ParticleEffectController peControllerScript;
-    public ParticleSystem _portalParticleSystem;
-    //public ParticleSystem _warpParticleSystem;
+    
     private int currentPoint;
     
 	// Use this for initialization
@@ -26,18 +24,15 @@ public class controller : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (!PointsOfInterest[currentPoint].GetComponent<VideoPlayer>().isPlaying && !_portalParticleSystem.IsAlive())
+        if (!PointsOfInterest[currentPoint].GetComponent<VideoPlayer>().isPlaying && !peControllerScript.GetPortalIsAlive())
         {
             // activate portal particle system
-            peControllerScript.ActParticleSystem( _portalParticleSystem); 
+            peControllerScript.ActivatePortal(); 
         }
     }
 
 	public void GoToNextPointofInterest()
     {
-        //Deactivate portal particle system
-        peControllerScript.De_ActParticleSystem(_portalParticleSystem); 
-
         //Set next point index
         if (currentPoint == (PointsOfInterest.Length - 1))
 		{
@@ -64,7 +59,7 @@ public class controller : MonoBehaviour {
         PointsOfInterest[currentPoint].GetComponent<VideoPlayer>().Play();
     }
 
-    public void SetPointsOfInterest()
+    private void SetPointsOfInterest()
     {
         for(int i = 0; i < PointsOfInterest.Length; i++ )
         {
@@ -72,8 +67,8 @@ public class controller : MonoBehaviour {
         }
     }
 
-    public void UpdateCameraPosition()
+    private void UpdateCameraPosition()
     {
-        camera.transform.position = PointsOfInterest[currentPoint].transform.position;
+        player.transform.position = PointsOfInterest[currentPoint].transform.position;
     }
 }
